@@ -60,6 +60,10 @@ int main() {
         files.pop_front();
         indexes.pop_front();
         for (int j = 0; j < frees[i]; j++){
+            if (files.back() == 0){
+                files.pop_back();
+                indexes.pop_back();
+            }
             int last_file_size = files.back();
             int last_file_id = indexes.back();
             std::cout << "i=" << i << "Last file size=" << last_file_size << " id=" << last_file_id << std::endl;
