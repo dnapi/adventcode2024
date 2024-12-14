@@ -10,8 +10,8 @@
 #include <deque>
 
 int main() {
-    std::ifstream file("input09test.txt");
-    //std::ifstream file("input09.txt");
+    // std::ifstream file("input09test.txt");
+    std::ifstream file("input09.txt");
     if (!file.is_open()){
         std::cerr << "Failed to  open file" << std::endl;
         return 1;
@@ -22,7 +22,7 @@ int main() {
     //     data.push_back(line);
     // }
     file.close();
-    int total = 0;
+    long total = 0;
     std::vector<int> input;
     std::deque<int> files;
     std::deque<int> indexes;
@@ -53,20 +53,18 @@ int main() {
     std::vector<int> data;
     for (int i = 0; files.size() > 0; i++){
         while (files[0] > 0){
-            std::cout << "i=" << i << "File left=" << files[i] << std::endl;
+            std::cout << "i=" << i << "File left=" << files[0] << std::endl;
             data.push_back(i);
             files[0]--;
         }
-        files.pop_front();
-        indexes.pop_front();
-        for (int j = 0; j < frees[i]; j++){
-            if (files.back() == 0){
-                files.pop_back();
-                indexes.pop_back();
-            }
+        if (files.size() )
+            files.pop_front();
+            indexes.pop_front();
+        for (int j = 0; j < frees[i] && files.size() > 0; j++){
             int last_file_size = files.back();
             int last_file_id = indexes.back();
-            std::cout << "i=" << i << "Last file size=" << last_file_size << " id=" << last_file_id << std::endl;
+            std::cout << "i=" << i << "Last file size=" << last_file_size << " id=" << last_file_id << "files.size=" << files.size() << std::endl;
+            //if (last_file_size > 0)
             data.push_back(last_file_id);
             files.back()--;
             if (files.back() == 0){
@@ -88,8 +86,12 @@ int main() {
         std::cout << frees[i] << " ";
     }
     std::cout << std::endl;
+    total = 0;
+    for (int i = 0; i < data.size(); i++){
+        total += data[i] * i;
+    }
     std::cout << "Answer=" << total << std::endl;
     return 0;
 }
 
-//1157
+//6399153661894
