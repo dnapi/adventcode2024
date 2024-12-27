@@ -92,43 +92,25 @@ struct State{
     int y;
     char state;
     long score;
-    std::string states;
-    std::vector<long> scores;
 };
 
 long min3(long a, long b, long c){
     return std::min(a, std::min(b, c));
 }
 
-long min_dict(std::map<char,long> dict){
-    long min_value = MAX_SCORE;
-    for (char c : "><v^"){
-        if (dict[c] < min_value)
-            min_value = dict[c];
-    }
-    return min_value;
-}
-
 long min_score(std::vector<std::string> data, std::vector<std::vector<std::map<char, long>>>& scores, State s){
     if (data[s.y][s.x] == 'E'){
-        if (s.score > min_dict(scores[s.y][s.x])){
+        if (s.score > scores[s.y][s.x][s.state]){
             return MAX_SCORE;
-        }
-        std::cout << "EEE " << s.score << std::endl;
-        for (int i = 0; i < data.size(); i++){
-             std::cout << data[i] << std::endl;
         }
         scores[s.y][s.x][s.state] = s.score;
         for (char c : "><v^")
             std::cout << c << "=" << scores[s.y][s.x][c] << std::endl;
-        std::cout << "steps=" << s.states << std::endl;
-        std::cout << "num of steps= " << s.states.size() << std::endl;
-        long turns = 0;
-        for (int i = 1; i < s.states.size(); i++){
-            if (s.states[i] != s.states[i - 1])
-                turns++;
-        }
-        std::cout << "turns:=" << turns << std::endl;
+        
+        // std::cout << "EEE " << s.score << std::endl;
+        // for (int i = 0; i < data.size(); i++){
+        //      std::cout << data[i] << std::endl;
+        // }
         return s.score;
     }
     if (data[s.y][s.x] != '.'){
@@ -139,7 +121,7 @@ long min_score(std::vector<std::string> data, std::vector<std::vector<std::map<c
         // }
         return MAX_SCORE;
     }
-    if (s.score > scores[s.y][s.x][s.state] + 10){
+    if (s.score > scores[s.y][s.x][s.state] + 1000){
         // std::cout << "score to big" << std::endl;
         return MAX_SCORE;
     }
@@ -149,24 +131,24 @@ long min_score(std::vector<std::string> data, std::vector<std::vector<std::map<c
     long left = MAX_SCORE;
     long front = MAX_SCORE;
     if (s.state == '>'){
-        front = min_score(data, scores, State{s.x + 1, s.y, s.state, s.score + 1, s.states + s.state});
-        right = min_score(data, scores, State{s.x, s.y + 1, 'v', s.score + 1001, s.states + s.state});
-        left = min_score(data, scores, State{s.x, s.y - 1, '^', s.score + 1001, s.states + s.state});
+        front = min_score(data, scores, State{s.x + 1, s.y, s.state, s.score + 1});
+        right = min_score(data, scores, State{s.x, s.y + 1, 'v', s.score + 1001});
+        left = min_score(data, scores, State{s.x, s.y - 1, '^', s.score + 1001});
     }
     else if (s.state == '<'){
-        front = min_score(data, scores, State{s.x - 1, s.y, s.state, s.score + 1, s.states + s.state});
-        right = min_score(data, scores, State{s.x, s.y - 1, '^', s.score + 1001, s.states + s.state});
-        left = min_score(data, scores, State{s.x, s.y + 1, 'v', s.score + 1001, s.states + s.state});
+        front = min_score(data, scores, State{s.x - 1, s.y, s.state, s.score + 1});
+        right = min_score(data, scores, State{s.x, s.y - 1, '^', s.score + 1001});
+        left = min_score(data, scores, State{s.x, s.y + 1, 'v', s.score + 1001});
     }
     else if (s.state == 'v'){
-        front = min_score(data, scores, State{s.x, s.y + 1, s.state, s.score + 1, s.states + s.state});
-        right = min_score(data, scores, State{s.x - 1, s.y, '<', s.score + 1001, s.states + s.state});
-        left = min_score(data, scores, State{s.x + 1, s.y, '>', s.score + 1001, s.states + s.state});
+        front = min_score(data, scores, State{s.x, s.y + 1, s.state, s.score + 1});
+        right = min_score(data, scores, State{s.x - 1, s.y, '<', s.score + 1001});
+        left = min_score(data, scores, State{s.x + 1, s.y, '>', s.score + 1001});
     }
     else if (s.state == '^'){
-        front = min_score(data, scores, State{s.x, s.y - 1, s.state, s.score + 1, s.states + s.state});
-        right = min_score(data, scores, State{s.x + 1, s.y, '>', s.score + 1001, s.states + s.state});
-        left = min_score(data, scores, State{s.x - 1, s.y, '<', s.score + 1001, s.states + s.state});
+        front = min_score(data, scores, State{s.x, s.y - 1, s.state, s.score + 1});
+        right = min_score(data, scores, State{s.x + 1, s.y, '>', s.score + 1001});
+        left = min_score(data, scores, State{s.x - 1, s.y, '<', s.score + 1001});
     }
     return min3(front, right, left);
 }
@@ -226,14 +208,14 @@ int main() {
     std::vector<std::vector<std::map<char, long>>> scores_saved(scores);
     // long left = min_score(data, scores, State{x, y,   '<', 0});
     // std::cout << "left=" << left << std::endl;
-    long right = min_score(data, scores, State{x + 1, y,   '>', 1, "", std::vector<long>{}});
+    long right = min_score(data, scores, State{x + 1, y,   '>', 2001});
     std::cout << "right=" << right << std::endl;
-    long up = min_score(data, scores, State{x, y - 1,   '^', 1001, "",  std::vector<long>{}});
+    long up = min_score(data, scores, State{x, y - 1,   '^', 1001});
     std::cout << "up=" << up << std::endl;
     // long down = min_score(data, scores, State{x, y,   'v', 1000});
     // std::cout << "down=" << down << std::endl;
     // long total = min3(left, right, min3(up, down, best_score));
-    long total = std::min(right, up);
+    //long total = std::min(right, up);
     std::cout << "min score=" << total << std::endl;
     for (char c: "><v^"){
         std::cout << c << "->" << scores[1][data[0].size() - 2][c];
@@ -245,4 +227,4 @@ int main() {
 }
 
 // 241860 too high
-//116476 -2000
+//116476
