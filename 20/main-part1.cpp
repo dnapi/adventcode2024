@@ -112,99 +112,37 @@ long min_score(std::vector<std::string> data, std::vector<std::vector<std::map<c
     return min3(front, right, left);
 }
 
-void get_deltas(std::vector<std::vector<long>>& data
-    , int x, int y
-    , long num_cheats
-    , long start_score
-    , std::vector<long>& cheat_scores
-    );
-void get_next_deltas(
-    std::vector<std::vector<long>>& data
-    , int x, int y
-    , int next_x, int next_y
-    , long num_cheats
-    , long start_score
-    , std::vector<long>& cheat_scores
-    ){
-    long next_score = data[next_y][next_x];
-    if (next_score < 0 && num_cheats <=  -next_score){ // on cheat
-        std::cout << "on cheat" << num_cheats << std::endl;
-        data[next_y][next_x] =  -num_cheats;
-        get_deltas(data, next_x, next_y, num_cheats, start_score, cheat_scores);
-    }
-}
-
-void get_deltas(std::vector<std::vector<long>>& data
-    , int x, int y
-    , long num_cheats
-    , long start_score
-    , std::vector<long>& cheat_scores
-    ){
-    if (x < 1 || y < 1 || x >= data[0].size() - 1 || y >= data.size() - 1 || num_cheats > 20)
-        return;
-    if (data[y][x] > start_score){
-        std::cout << "back to regular path" << std::endl;
-        cheat_scores[data[y][x]] = std::max(cheat_scores[data[y][x]], data[y][x] - start_score - num_cheats);
-        return;
-    }
-    get_next_deltas(data, x, y, x + 1, y, num_cheats + 1, start_score, cheat_scores);// right
-    get_next_deltas(data, x, y, x - 1, y, num_cheats + 1, start_score, cheat_scores);// left
-    get_next_deltas(data, x, y, x, y + 1, num_cheats + 1, start_score, cheat_scores);// down
-    get_next_deltas(data, x, y, x, y - 1, num_cheats + 1, start_score, cheat_scores);// up
-}
-
-void find_scores(std::vector<std::vector<long>> data, int x, int y, std::vector<long>& saved_scores);
-void check_next(
-    std::vector<std::vector<long>> data
-    , int cur_x, int cur_y
-    , int next_x, int next_y
-    , long start_score, long num_cheats
-    , std::vector<long>& saved_scores
-    ){
-    long next_score = data[next_y][next_x];
-    long cur_score = data[cur_y][cur_x];
-    if (next_score > cur_score){  // regular path
-        std::cout << "regular path step " << next_score << " xy=" << next_x << " " << next_y << std::endl;
-        find_scores(data, next_x, next_y, saved_scores);
-    }
-    else {
-        std::cout << "cheat path step " << next_score << " xy=" << next_x << " " << next_y << std::endl;
-        std::vector<long> cheat_scores(10000,-1);
-        std::vector<std::vector<long>> data_copy(data);
-        get_deltas(data_copy, next_x, next_y, 1, start_score, cheat_scores);
-        for (int i = 0; i < cheat_scores.size(); i++){
-            if (cheat_scores[i] != -1){
-                saved_scores.push_back(cheat_scores[i]);
-          //      std::cout << "cheat score right =" << cheat_scores[i] << " i= " <<  i << std::endl;
-            }
-        }
-        for (int i = 0; i < data_copy.size(); i++){
-            for (int j = 0; j < data_copy[i].size(); j++){
-                if (data_copy[i][j] == - MAX_SCORE){
-                    data_copy[i][j] = 0;
-                }
-                std::cout << data_copy[i][j] << " ";
-            }
-            std::cout << std::endl;
-        }
-
-    }
-}
-
 void find_scores(std::vector<std::vector<long>> data, int x, int y, std::vector<long>& saved_scores){
+    // std::cout << "x=" << x << " y=" << y << "data=" << data[y][x] << std::endl;
     if (x < 1 || y < 1 || x >= data[0].size() - 1 || y >= data.size() - 1)
         return;
-    if (data[y][x] >= 1)
-        return;
-    check_next(data, x, y, x + 1, y, data[y][x], 1, saved_scores);// right
-    check_next(data, x, y, x - 1, y, data[y][x], 1, saved_scores);// left
-    check_next(data, x, y, x, y + 1, data[y][x], 1, saved_scores);// down
-    check_next(data, x, y, x, y - 1, data[y][x], 1, saved_scores);// up
+    //  rigth
+    if (data[y][x + 1] > data[y][x])
+        find_scores(data, x + 1, y, saved_scores);
+    else if (x + 2 < data[0].size() && data[y][x + 2] > data[y][x]){
+        //std::cout << "cheating" << std::endl;
+        saved_scores.push_back(data[y][x + 2] - data[y][x] - 2);
+    }
+    //  left
+    if (data[y][x - 1] > data[y][x])
+        find_scores(data, x - 1, y, saved_scores);
+    else if (x - 2 >= 0 && data[y][x - 2] > data[y][x])
+        saved_scores.push_back(data[y][x - 2] - data[y][x] - 2);
+    //  up
+    if (data[y - 1][x] > data[y][x])
+        find_scores(data, x, y - 1, saved_scores);
+    else if (y - 2 >= 0 && data[y - 2][x] > data[y][x])
+        saved_scores.push_back(data[y - 2][x] - data[y][x] - 2);
+    //  down
+    if (data[y + 1][x] > data[y][x])
+        find_scores(data, x, y + 1, saved_scores);
+    else if (y + 2 < data.size() && data[y + 2][x] > data[y][x])
+        saved_scores.push_back(data[y + 2][x] - data[y][x] - 2);
 }
 
 int main() {
-    // std::ifstream file("input.txt");
-    std::ifstream file("input-test.txt");
+    std::ifstream file("input.txt");
+    // std::ifstream file("input-test.txt");
 
     if (!file.is_open()){
         std::cerr << "Failed to open file" << std::endl;
@@ -288,7 +226,7 @@ int main() {
                 best_scores[i][j] = std::min(best_scores[i][j], scores[i][j][c]);
             }
             if (best_scores[i][j] == best_score)
-                best_scores[i][j] = - MAX_SCORE;
+                best_scores[i][j] = -1;
             // std::cout << best_scores[i][j] << " ";
         }
         // std::cout << std::endl;
@@ -296,13 +234,12 @@ int main() {
     std::cout << "finding cheats" << "x=" << x << " y=" << y << std::endl;
     std::vector<long> cheats = {};
     find_scores(best_scores, x, y, cheats);
-    std::cout << "num of cheats = " << cheats.size() << std::endl;
+    std::cout << "cheats " << cheats.size() << std::endl;
     long total0 = 0;
     for (int i = 0; i < cheats.size(); i++){
-        if (cheats[i] >=0){
-            std::cout << cheats[i] << " ";
+        //std::cout << cheats[i] << " ";
+        if (cheats[i] >= 100)
             total0++;
-        }
     }
     std::cout << "total0=" << total0 << std::endl;
     return 0;
