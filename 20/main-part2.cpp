@@ -112,122 +112,73 @@ long min_score(std::vector<std::string> data
     return min3(front, right, left);
 }
 
-void get_deltas(std::vector<std::vector<long>>& data
-    , int x, int y
-    , long num_cheats
-    , long start_score
-    , std::vector<long>& cheat_scores
-    );
-void get_next_deltas(
-    std::vector<std::vector<long>>& data
-    , int x, int y
-    , int next_x, int next_y
-    , long num_cheats
-    , long start_score
-    , std::vector<long>& cheat_scores
-    ){
-    long next_score = data[next_y][next_x];
-    if ((next_score < 0 && num_cheats <  -next_score) || next_score > 0
-    // if inside the wall on improving cheat path  OR back to regular path
-        ){ 
-        get_deltas(data, next_x, next_y, num_cheats, start_score, cheat_scores);
-    }
+long manhattan(int x1, int y1, int x2, int y2){
+    return abs(x1 - x2) + abs(y1 - y2);
 }
 
-void get_deltas(std::vector<std::vector<long>>& data
-    , int x, int y
-    , long num_cheats
-    , long start_score
-    , std::vector<long>& cheat_scores
-    ){
-    if (x < 1 || y < 1 || x >= data[0].size() - 1 || y >= data.size() - 1 || num_cheats > 20)
-        return;
-    // std::cout << "data[y][x]=" << data[y][x] << " x=" << x << " y=" << y << " start_score" << start_score <<  std::endl;
-    if (data[y][x] > start_score){ // exit from wall. back to regular path
-       // std::cout << "back to regular path" << std::endl;
-        cheat_scores[data[y][x]] = std::max(cheat_scores[data[y][x]], data[y][x] - start_score - num_cheats);
-        if (cheat_scores[data[y][x]]  == 76)
-            std::cout << "(x,y)=" << x << " " << y << " score=" << data[y][x] << " num_cheats=" << num_cheats << " cheat_score=" << data[y][x] - start_score - num_cheats << std::endl;
-        // get_next_deltas(data, x, y, x + 1, y, num_cheats + 1, start_score, cheat_scores);// right
-        // get_next_deltas(data, x, y, x - 1, y, num_cheats + 1, start_score, cheat_scores);// left
-        // get_next_deltas(data, x, y, x, y + 1, num_cheats + 1, start_score, cheat_scores);// down
-        // get_next_deltas(data, x, y, x, y - 1, num_cheats + 1, start_score, cheat_scores);// up
-        return;
-    }
-    if (data[y][x] >= 0){ // back to regular path before the entrypoint
-        // std::cout << "back to regular path before the entrypoint" << std::endl;
-        return;
-    }
-    // still in the wall
-    data[y][x] = std::max(-num_cheats, data[y][x]);
-    // get_deltas(data, x + 1, y, num_cheats + 1, start_score, cheat_scores);// right
-    // get_deltas(data, x - 1, y, num_cheats + 1, start_score, cheat_scores);// left
-    // get_deltas(data, x, y + 1, num_cheats + 1, start_score, cheat_scores);// down
-    // get_deltas(data, x, y - 1, num_cheats + 1, start_score, cheat_scores);// up
-    get_next_deltas(data, x, y, x + 1, y, num_cheats + 1, start_score, cheat_scores);// right
-    get_next_deltas(data, x, y, x - 1, y, num_cheats + 1, start_score, cheat_scores);// left
-    get_next_deltas(data, x, y, x, y + 1, num_cheats + 1, start_score, cheat_scores);// down
-    get_next_deltas(data, x, y, x, y - 1, num_cheats + 1, start_score, cheat_scores);// up
-}
-
-void find_walls(std::vector<std::vector<long>> data, int x, int y, std::vector<long>& saved_scores);
-void check_next(
-    std::vector<std::vector<long>> data
-    , int cur_x, int cur_y
-    , int next_x, int next_y
-    , long start_score
-    , long num_cheats
-    , std::vector<long>& saved_scores
-    ){
-    long cur_score = data[cur_y][cur_x];
-    long next_score = data[next_y][next_x];
-    if (next_score > 0){  // still on regular path moving forward
-        return;
-        if (next_score > cur_score){ // if we are moving forward along the regular path
-            std::cout << "regular path step " << next_score << " xy=" << next_x << " " << next_y << std::endl;
-            find_walls(data, next_x, next_y, saved_scores);
-        }
-        else  // if we are moving back
-            return; 
-    }
-    else { // we found the wall
-        //std::cout << "cheat path step " << next_score << " xy=" << next_x << " " << next_y << std::endl;
-        std::vector<long> cheat_scores(10000,-1);  //10000 must be less than length of regular path
-        std::vector<std::vector<long>> data_copy(data);
-        get_deltas(data_copy, next_x, next_y, 1, start_score, cheat_scores); //find all shortcuts and save best scores to cheat_scores
-        for (int i = 0; i < cheat_scores.size(); i++){
-            if (cheat_scores[i] != -1){
-                saved_scores.push_back(cheat_scores[i]);
-          //      std::cout << "cheat score right =" << cheat_scores[i] << " i= " <<  i << std::endl;
-            }
-        }
-        for (int i = 0; i < data_copy.size(); i++){
-            for (int j = 0; j < data_copy[i].size(); j++){
-                if (data_copy[i][j] == - MAX_SCORE){
-                    data_copy[i][j] = 0;
-                }
-                std::cout << data_copy[i][j] << " ";
-            }
-            std::cout << std::endl;
-        }
-        std::cout << std::endl;
-
-    }
-}
-
-void find_walls(std::vector<std::vector<long>> data, int x, int y, std::vector<long>& saved_scores){
+#define CHEAT_TIME 20
+void find_cheats(std::vector<std::vector<long>>& data, int x, int y, std::vector<long>& saved_scores){
     if (x < 1 || y < 1 || x >= data[0].size() - 1 || y >= data.size() - 1) // outter walls
         return;
-    // if (data[y][x] >= 1) // if not (in the inner walls or the start point)
-    //     return;
-    check_next(data, x, y, x + 1, y, data[y][x], 1, saved_scores);// right
-    check_next(data, x, y, x - 1, y, data[y][x], 1, saved_scores);// left
-    check_next(data, x, y, x, y + 1, data[y][x], 1, saved_scores);// down
-    check_next(data, x, y, x, y - 1, data[y][x], 1, saved_scores);// up
+    int x_min = x - CHEAT_TIME > 0 ? x - CHEAT_TIME : 1;
+    int x_max = x + CHEAT_TIME < data[0].size() - 1 ? x + CHEAT_TIME : data[0].size() - 2;
+    int y_min = y - CHEAT_TIME > 0 ? y - CHEAT_TIME : 1;
+    int y_max = y + CHEAT_TIME < data.size() - 1 ? y + CHEAT_TIME : data.size() - 2;
+    //std::cout << "x=" << x << " y=" << y << std::endl;
+    // std::cout << "x_min=" << x_min << " x_max=" << x_max << " y_min=" << y_min << " y_max=" << y_max << std::endl;
+    for (int j = y_min; j <= y_max; j++){
+        for (int i = x_min; i <= x_max; i++){
+            if (data[j][i] < 0)
+                continue;
+            long saved_score = data[j][i] - data[y][x] - manhattan(x, y, i, j);
+            if (manhattan(x, y, i, j) > CHEAT_TIME)
+                continue;
+            if (saved_score > 0){
+                // std::cout << "i=" << i << " j=" << j 
+                //     << " saved_score=" << saved_score 
+                //     << " data= ji " << data[j][i]
+                //     << " data= yx " << data[y][x]
+                //     << " manhattan=" << manhattan(x, y, i, j)
+                //     << std::endl;
+                saved_scores.push_back(saved_score);
+            }
+        }
+
+        
+    }
+}
+
+void find_all_cheats(std::vector<std::vector<long>>& data, int x, int y, std::vector<long>& saved_scores){
+    if (x < 1 || y < 1 || x >= data[0].size() - 1 || y >= data.size() - 1) // outter walls
+        return;
+    if (data[y][x] < 0)
+        return;
+    find_cheats(data, x, y, saved_scores);
+    if (data[y][x + 1] > data[y][x]){
+        find_all_cheats(data, x + 1, y, saved_scores);
+        return;
+    }
+    if (data[y][x - 1] > data[y][x]){
+        find_all_cheats(data, x - 1, y, saved_scores);
+        return;
+    }
+    if (data[y + 1][x] > data[y][x]){
+        find_all_cheats(data, x, y + 1, saved_scores);
+        return;
+    }
+    if (data[y - 1][x] > data[y][x]){
+        find_all_cheats(data, x, y - 1, saved_scores);
+        return;
+    }
+    
 }
 
 int main() {
-    std::ifstream file("input-test.txt");
+    // long top_limiit = 0;
+    // std::ifstream file("input-test.txt");
+
+    long top_limiit = 100;
+    std::ifstream file("input.txt");
 
     if (!file.is_open()){
         std::cerr << "Failed to open file" << std::endl;
@@ -304,30 +255,38 @@ int main() {
     // Second part starts here.
     std::cout << "finding cheats" << "x=" << x << " y=" << y << std::endl;
     std::vector<long> cheats = {};
-    find_walls(best_scores, x, y, cheats);
+    find_all_cheats(best_scores, x, y, cheats);
+    // find_cheats(best_scores, x, y, cheats);
     std::cout << "num of cheats = " << cheats.size() << std::endl;
     long total0 = 0;
     long max_cheat = 0;
-    std::vector<long> count_scores(1000,0);
+    std::vector<long> count_scores(100000,0);
     for (int i = 0; i < cheats.size(); i++){
         if (cheats[i] >=0){
             count_scores[cheats[i]]++;
-            std::cout << cheats[i] << " ";
+      //      std::cout << cheats[i] << " ";
             total0++;
             if (cheats[i] > max_cheat)
                 max_cheat = cheats[i];
         }
     }
-    for (int i = 0; i < count_scores.size(); i++){
-        if (count_scores[i] != 0)
-            std::cout << "i=" << i << " count=" << count_scores[i] << std::endl;
+    std::cout << std::endl;
+    long top100cheats = 0;
+    for (int i = top_limiit; i < count_scores.size(); i++){
+        if (count_scores[i] > 0){
+           std::cout  
+                << " count=" << count_scores[i] 
+                << " i=" << i
+                << std::endl;
+
+            top100cheats += count_scores[i];
+            //std::cout << "top100cheats=" << top100cheats << std::endl;
+        }
     }
     std::cout << "total0=" << total0 << std::endl;
     std::cout << "max_cheat=" << max_cheat << std::endl;
+    std::cout << "top100cheats=" << top100cheats << std::endl;
     return 0;
 }
 
-
-
-// 241860 too high
-//116476 -2000
+//top100cheats=2388801  too high
